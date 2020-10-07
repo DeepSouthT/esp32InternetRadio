@@ -7,7 +7,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 28.09.2020
+ * Last modified: 06.10.2020
  *******************************/
 
 #ifndef __SDHELPER_H__
@@ -15,16 +15,16 @@
 
 class sdHelper
 {
-  public:
-    bool initSD(void);
-    void closeSD(void);
-    bool readCred(const char* usr, const char* psw);
-    void readStation(unsigned int position, const char* station);
-  
-  private:
-    const unsigned int USR_POSITION = 0;
-    const unsigned int PSW_POSITION = 1;
-    const unsigned int SOS_POSITION = 2;
+public:
+  bool initSD(void);
+  void closeSD(void);
+  bool readCred(String &ssid, String &psw);
+  void readStation(unsigned int position, const char *station);
+
+private:
+  const char *cred_path = "/cred.txt";
+  const char *stat_path = "/stat.txt";
+  void prepareString(char start_char, char replacer_char, char *data, unsigned int data_len);
 };
 
 #endif //__SDHELPER_H__

@@ -12,7 +12,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 28.09.2020
+ * Last modified: 01.10.2020
  *******************************/
 
 #include <Arduino.h>
@@ -20,42 +20,56 @@
 #include "wifihelper.h"
 #include "sdhelper.h"
 
-const char* ssid = "";
-const char* password =  "";
-
 wifiHelper objWifiHelper;
 sdHelper objSdHelper;
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   Serial.println("--------------------------");
   Serial.println("esp32InternetRadio started");
   Serial.println("--------------------------");
 
+  // ----- Get the SSID and PSW -----
+  Serial.println("Reading SD card");
+  bool status = objSdHelper.initSD();
+  if (!status)
+  {
+    Serial.println("SD not mounted");
+  }
+
+  String ssid, pwd;
+
+  status = objSdHelper.readCred(ssid, pwd);
+  if (!status)
+  {
+    Serial.println("Read failed");
+  }
+  // --------------------------------
+
+  // ----- Connecting to WiFi -------
   Serial.println("Connecting to WiFi");
-  bool status = objWifiHelper.connectWifi(ssid, password, 5);
+
+  Serial.println(ssid);
+  Serial.println(pwd);
+
+  status = objWifiHelper.connectWifi(ssid, pwd, 5);
 
   if (status)
   {
     Serial.println("WiFi connected");
-  } else {
+  }
+  else
+  {
     Serial.println("WiFi not connected");
   }
-
-  status = objSdHelper.initSD();
-
-  if (status)
-  {
-    Serial.println("SD mounted");
-  } else {
-    Serial.println("SD not mounted");
-  }
+  // --------------------------------
 
   objWifiHelper.disconnectWifi();
-
   objSdHelper.closeSD();
 }
 
-void loop() {
+void loop()
+{
   // put your main code here, to run repeatedly:
 }

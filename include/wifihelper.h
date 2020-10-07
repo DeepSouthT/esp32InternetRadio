@@ -15,9 +15,9 @@
 
 class wifiHelper
 {
-  public:
-    bool connectWifi(const char* ssid, const char* password, unsigned int repetition);
-    void disconnectWifi(void);
+public:
+  bool connectWifi(String ssid, String password, unsigned int repetition);
+  void disconnectWifi(void);
 };
 
 #endif //__WIFIHELPER_H__

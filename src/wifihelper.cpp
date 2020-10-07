@@ -14,49 +14,53 @@
 
 #include "wifihelper.h"
 
-bool wifiHelper::connectWifi(const char* ssid, const char* password, unsigned int repetition)
+bool wifiHelper::connectWifi(String ssid, String password, unsigned int repetition)
 {
-    WiFi.begin(ssid, password);
+    WiFi.begin((const char *)ssid.c_str(), (const char *)password.c_str());
 
-    for(unsigned int i = 0; i < repetition; i++)
+    for (unsigned int i = 0; i < repetition; i++)
     {
-        if(WiFi.status() != WL_CONNECTED)
+        if (WiFi.status() != WL_CONNECTED)
         {
             delay(500);
             Serial.println("Not connected");
-        } else {
+        }
+        else
+        {
             i = repetition;
             Serial.println("Connected");
         }
     }
 
-    if(WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
         Serial.println("Disconnecting WiFi");
         WiFi.disconnect();
         delay(2000);
-        WiFi.begin(ssid, password);
+        WiFi.begin((const char *)ssid.c_str(), (const char *)password.c_str());
 
-        for(unsigned int i = 0; i < repetition; i++)
+        for (unsigned int i = 0; i < repetition; i++)
         {
-            if(WiFi.status() != WL_CONNECTED)
+            if (WiFi.status() != WL_CONNECTED)
             {
                 delay(500);
                 Serial.println("Not connected");
-            } else {
+            }
+            else
+            {
                 i = repetition;
                 Serial.println("Connected");
             }
         }
     }
 
-  if(WiFi.status() == WL_CONNECTED)
-  {
-      Serial.println(WiFi.localIP());
-      return true;
-  }
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        Serial.println(WiFi.localIP());
+        return true;
+    }
 
-  return false;
+    return false;
 }
 
 void wifiHelper::disconnectWifi(void)
