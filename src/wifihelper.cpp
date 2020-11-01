@@ -7,12 +7,14 @@
  * Description:
  *     ToDo
  *
- * Last modified: 13.09.2020
+ * Last modified: 01.11.2020
  *******************************/
 
 #include "WiFi.h"
 
 #include "wifihelper.h"
+
+WiFiClient client;
 
 bool wifiHelper::connectWifi(String ssid, String password, unsigned int repetition)
 {
@@ -67,4 +69,46 @@ void wifiHelper::disconnectWifi(void)
 {
     Serial.println("Disconnecting WiFi");
     WiFi.disconnect(true);
+}
+
+bool wifiHelper::connectClient(void)
+{
+    if (client.connect(host, port))
+    {
+        client.print(String("GET ") + path + " HTTP/1.1\r\n" +
+                     "Host: " + host + "\r\n" +
+                     "Connection: close\r\n\r\n");
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+uint8_t wifiHelper::readStream(uint8_t *mp3buff)
+{
+    if (client.available() > 0)
+    {
+        bytesread = client.read(mp3buff, 32);
+
+        if (!client_status_ok_printed)
+        {
+            Serial.println("Client available");
+            client_status_ok_printed = true;
+        }
+        client_status_nok_printed = false;
+    }
+    else
+    {
+        if (!client_status_nok_printed)
+        {
+            Serial.println("Client not available");
+            client_status_nok_printed = true;
+        }
+        client_status_ok_printed = false;
+    }
+
+    return bytesread;
 }
