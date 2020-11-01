@@ -38,6 +38,7 @@ private:
   uint8_t bytesread = 0;
   bool client_status_ok_printed = false;
   bool client_status_nok_printed = false;
+  unsigned int client_status_nok_counter = 0;
 
   // Few Radio Stations
   /*

@@ -12,7 +12,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 20.10.2020
+ * Last modified: 01.11.2020
  *******************************/
 
 #include <Arduino.h>
@@ -109,6 +109,5 @@ void loop()
 {
 
   bytesread = objWifiHelper.readStream(mp3buff);
-
   player.playChunk(mp3buff, bytesread);
 }

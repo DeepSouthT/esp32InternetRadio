@@ -99,6 +99,7 @@ uint8_t wifiHelper::readStream(uint8_t *mp3buff)
             client_status_ok_printed = true;
         }
         client_status_nok_printed = false;
+        client_status_nok_counter = 0;
     }
     else
     {
@@ -108,6 +109,14 @@ uint8_t wifiHelper::readStream(uint8_t *mp3buff)
             client_status_nok_printed = true;
         }
         client_status_ok_printed = false;
+        client_status_nok_counter++;
+
+        if(client_status_nok_counter > 10000)
+        {
+            Serial.println("Reconnecting client");
+            (void)connectClient();
+            client_status_nok_counter = 0;
+        }
     }
 
     return bytesread;
