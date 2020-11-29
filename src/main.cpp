@@ -12,7 +12,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 01.11.2020
+ * Last modified: 29.11.2020
  *******************************/
 
 #include <Arduino.h>
@@ -31,7 +31,11 @@
 uint8_t bytesread = 0;
 uint8_t mp3buff[32]; // vs1053 likes 32 bytes at a time
 
+stations play_station;
+
 VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
+
+bool status = true;
 
 sdHelper objSdHelper;
 wifiHelper objWifiHelper;
@@ -56,18 +60,38 @@ void setup()
 
   // ----- Get the SSID and PSW -----
   Serial.println("Reading SD card");
-  bool status = objSdHelper.initSD();
+  status = objSdHelper.initSD();
   if (!status)
   {
     Serial.println("SD not mounted");
   }
 
   String ssid, pwd;
-
-  status = objSdHelper.readCred(ssid, pwd);
+  if (status)
+  {
+    status = objSdHelper.readCred(ssid, pwd);
+  }
   if (!status)
   {
     Serial.println("Read failed");
+  }
+  // --------------------------------
+
+  // ------- Read station list ------
+  uint8_t ret = objSdHelper.readStationList();
+  Serial.printf("Available stations: %d\n", ret);
+
+  if (status && (ret > 0))
+  {
+    status = objSdHelper.getStation(3, play_station);
+  }
+  if (!status)
+  {
+    Serial.println("Requested station not found");
+  }
+  else
+  {
+    Serial.println(play_station.name.c_str());
   }
 
   objSdHelper.closeSD();
@@ -79,9 +103,11 @@ void setup()
   Serial.println("Connecting to WiFi");
 
   Serial.println(ssid);
-  Serial.println(pwd);
 
-  status = objWifiHelper.connectWifi(ssid, pwd, 2);
+  if (status)
+  {
+    status = objWifiHelper.connectWifi(ssid, pwd, 2);
+  }
   if (status)
   {
     Serial.println("WiFi connected");
@@ -93,7 +119,10 @@ void setup()
   // --------------------------------
 
   // ----- Connecting to Station/Client -------
-  status = objWifiHelper.connectClient();
+  if (status)
+  {
+    status = objWifiHelper.connectClient(&play_station);
+  }
   if (status)
   {
     Serial.println("Client connected");
@@ -107,7 +136,9 @@ void setup()
 
 void loop()
 {
-
-  bytesread = objWifiHelper.readStream(mp3buff);
-  player.playChunk(mp3buff, bytesread);
+  if (status)
+  {
+    bytesread = objWifiHelper.readStream(mp3buff, &play_station);
+    player.playChunk(mp3buff, bytesread);
+  }
 }

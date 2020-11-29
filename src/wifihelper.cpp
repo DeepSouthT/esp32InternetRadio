@@ -7,7 +7,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 01.11.2020
+ * Last modified: 29.11.2020
  *******************************/
 
 #include "WiFi.h"
@@ -71,12 +71,19 @@ void wifiHelper::disconnectWifi(void)
     WiFi.disconnect(true);
 }
 
-bool wifiHelper::connectClient(void)
+bool wifiHelper::connectClient(stations *station)
 {
-    if (client.connect(host, port))
+    if (!connectClient_executed_once)
     {
-        client.print(String("GET ") + path + " HTTP/1.1\r\n" +
-                     "Host: " + host + "\r\n" +
+        station->host.toCharArray(host_tst, station->host.length());
+        station->path.toCharArray(path_tst, station->path.length());
+        connectClient_executed_once = true;
+    }
+
+    if (client.connect(host_tst, station->port))
+    {
+        client.print(String("GET ") + path_tst + " HTTP/1.1\r\n" +
+                     "Host: " + host_tst + "\r\n" +
                      "Connection: close\r\n\r\n");
 
         return true;
@@ -87,7 +94,7 @@ bool wifiHelper::connectClient(void)
     }
 }
 
-uint8_t wifiHelper::readStream(uint8_t *mp3buff)
+uint8_t wifiHelper::readStream(uint8_t *mp3buff, stations *station)
 {
     if (client.available() > 0)
     {
@@ -111,10 +118,10 @@ uint8_t wifiHelper::readStream(uint8_t *mp3buff)
         client_status_ok_printed = false;
         client_status_nok_counter++;
 
-        if(client_status_nok_counter > 10000)
+        if (client_status_nok_counter > 10000)
         {
             Serial.println("Reconnecting client");
-            (void)connectClient();
+            (void)connectClient(station);
             client_status_nok_counter = 0;
         }
     }

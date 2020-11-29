@@ -7,7 +7,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 07.10.2020
+ * Last modified: 23.10.2020
  *******************************/
 
 #include "FS.h"
@@ -16,11 +16,16 @@
 
 #include "sdhelper.h"
 
-#define SSID_POS 0      // Position of SSID in the credential text file
-#define SSID_LEN 20     // Maximum length of SSID
-#define PWD_POS 1       // Position of pasword in the credential text file
-#define PWD_LEN 30      // Maximum length of pasword
-#define CRED_FILE_LEN 2 // Number of line expected in the credential text file
+#define SSID_POS 0        // Position of SSID in the credential text file
+#define SSID_LEN 20       // Maximum length of SSID
+#define PWD_POS 1         // Position of pasword in the credential text file
+#define PWD_LEN 30        // Maximum length of pasword
+#define CRED_FILE_LEN 2   // Maximum number of line expected in the credential text file
+#define STAT_FILE_LEN 250 // Maximum number of line expected in the station text file
+#define HOST_LEN 75
+#define PATH_LEN 75
+#define NAME_LEN 25
+#define PORT_LEN 15
 
 bool sdHelper::initSD(void)
 {
@@ -123,6 +128,92 @@ bool sdHelper::readCred(String &ssid, String &psw)
     psw = pwd_tmp;
 
     file.close();
+
+    return true;
+}
+
+uint8_t sdHelper::readStationList(void)
+{
+    const char name_key[6] = "name=";
+    const char host_key[6] = "host=";
+    const char path_key[6] = "path=";
+    const char port_key[6] = "port=";
+    const uint8_t key_len = 5;
+    total_aval_stations = 0;
+
+    char line[HOST_LEN] = {0};
+    bool station_complete = false;
+    unsigned int line_counter = 0;
+    std::string line_str, name_str, host_str, path_str, port_str;
+    stations station;
+
+    File file = SD.open(stat_path);
+    if (!file)
+    {
+        Serial.println("Failed to open file for reading");
+        return false;
+    }
+
+    while ((file.available()) && (line_counter < STAT_FILE_LEN))
+    {
+        file.readBytesUntil('\n', line, HOST_LEN);
+
+        line_str = line;
+        memset(line, 0, HOST_LEN);
+
+        if (line_str.find(name_key) != std::string::npos)
+        {
+            name_str = line_str.erase(0, key_len);
+            station.name = name_str.c_str();
+            station_complete = false;
+        }
+        else if (line_str.find(host_key) != std::string::npos)
+        {
+            host_str = line_str.erase(0, key_len);
+            station.host = host_str.c_str();
+            station_complete = false;
+        }
+        else if (line_str.find(path_key) != std::string::npos)
+        {
+            path_str = line_str.erase(0, key_len);
+            station.path = path_str.c_str();
+            station_complete = false;
+        }
+        else if (line_str.find(port_key) != std::string::npos)
+        {
+            port_str = line_str.erase(0, key_len);
+            station.port = atoi(port_str.c_str());
+            station_complete = true;
+        }
+        else
+        {
+            station_complete = false;
+        }
+
+        if (station_complete)
+        {
+            list_of_stations.push_back(station);
+        }
+
+        line_counter++;
+    }
+
+    file.close();
+    total_aval_stations = list_of_stations.size();
+
+    return total_aval_stations;
+}
+
+bool sdHelper::getStation(uint8_t station_number, stations &station)
+{
+    if (station_number < 0 || station_number > total_aval_stations)
+    {
+        return false;
+    }
+
+    std::list<stations>::iterator it = list_of_stations.begin();
+    std::advance(it, station_number);
+    station = *it;
 
     return true;
 }
