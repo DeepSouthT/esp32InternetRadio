@@ -12,7 +12,7 @@
  * Description:
  *     ToDo
  *
- * Last modified: 29.11.2020
+ * Last modified: 15.12.2020
  *******************************/
 
 #include <Arduino.h>
@@ -32,6 +32,16 @@
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+uint8_t total_aval_stations = 0;
+uint8_t initial_station = 0;
+
+const int buttonUp = 16;     // the number of the pushbutton pin
+const int buttonDown = 17;     // the number of the pushbutton pin
+int buttonUpState = 0;         // variable for reading the pushbutton status
+int buttonDownState = 0;         // variable for reading the pushbutton status
+int buttonUpStateOld = 0;         // variable for reading the pushbutton status
+int buttonDownStateOld = 0;         // variable for reading the pushbutton status
 
 #define VS1053_CS 32
 #define VS1053_DCS 33
@@ -69,6 +79,14 @@ void displayText(String text) {
   delay(100);
 }
 
+bool selectStation(uint8_t value)
+{
+  bool status = false;
+  status = objSdHelper.getStation(initial_station, play_station);
+
+  return status;
+}
+
 void setup()
 {
 
@@ -77,6 +95,10 @@ void setup()
   Serial.println("--------------------------");
   Serial.println("esp32InternetRadio started");
   Serial.println("--------------------------");
+
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonUp, INPUT);
+  pinMode(buttonDown, INPUT);
 
   SPI.begin();
 
@@ -114,13 +136,14 @@ void setup()
 
   displayText("Reading station");
   // ------- Read station list ------
-  uint8_t ret = objSdHelper.readStationList();
-  Serial.printf("Available stations: %d\n", ret);
+  total_aval_stations = objSdHelper.readStationList();
+  Serial.printf("Available stations: %d\n", total_aval_stations);
 
-  if (status && (ret > 0))
+  if (status && (total_aval_stations > 0))
   {
-    status = objSdHelper.getStation(0, play_station);
+    status = selectStation(initial_station);
   }
+
   if (!status)
   {
     Serial.println("Requested station not found");
@@ -171,13 +194,59 @@ void setup()
   }
   // --------------------------------
 
-  displayText("Streaming" + play_station.name);
+  displayText("Streaming " + play_station.name);
 }
 
 void loop()
 {
   if (status)
   {
+    // read the state of the pushbutton value
+    buttonUpStateOld = buttonUpState;
+    buttonDownStateOld = buttonDownState;
+    buttonUpState = digitalRead(buttonUp);
+    buttonDownState = digitalRead(buttonDown);
+
+    if((buttonUpStateOld == HIGH) && (buttonUpState == LOW))
+    {
+      //Station Up
+      initial_station++;
+      if(initial_station > (total_aval_stations - 1))
+      {
+        initial_station = 0;
+      }
+
+      bool status_ = selectStation(initial_station);
+      if (!status_)
+      {
+        displayText("Station not found");
+      }
+      else
+      {
+        displayText("Streaming " + play_station.name);
+        status_ = objWifiHelper.connectClient(&play_station);
+      }
+    } else if((buttonDownStateOld == HIGH) && (buttonDownState == LOW))
+    {
+      //Station down
+      initial_station--;
+      if(initial_station < 0)
+      {
+        initial_station = (total_aval_stations - 1);
+      }
+
+      bool status_ = selectStation(initial_station);
+      if (!status_)
+      {
+        displayText("Station not found");
+      }
+      else
+      {
+        displayText("Streaming " + play_station.name);
+        status_ = objWifiHelper.connectClient(&play_station);
+      }
+    }
+
     bytesread = objWifiHelper.readStream(mp3buff, &play_station);
     player.playChunk(mp3buff, bytesread);
   }
