@@ -166,7 +166,7 @@ void setup()
 
   if (status)
   {
-    status = objWifiHelper.connectWifi(ssid, pwd, 2);
+    status = objWifiHelper.connectWifi(ssid, pwd, 5);
   }
   if (status)
   {

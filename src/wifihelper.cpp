@@ -45,7 +45,7 @@ bool wifiHelper::connectWifi(String ssid, String password, unsigned int repetiti
         {
             if (WiFi.status() != WL_CONNECTED)
             {
-                delay(500);
+                delay(2000);
                 Serial.println("Not connected");
             }
             else
